@@ -12,7 +12,7 @@ spec:
       template:
         spec:
           containers:
-          - image: mindspore/mindspore:0.1.0-alpha
+          - image: mindspore/mindspore-cpu:0.1.0-alpha
             imagePullPolicy: IfNotPresent
             name: msjob-mnist
             command: ["/bin/bash", "-c", "python /tmp/test/MNIST/lenet.py"]
@@ -35,7 +35,7 @@ spec:
       template:
         spec:
           containers:
-          - image: mindspore/mindspore:0.1.0-alpha
+          - image: mindspore/mindspore-cpu:0.1.0-alpha
             imagePullPolicy: IfNotPresent
             name: msjob-mnist
             command: ["/bin/bash", "-c", "python /tmp/test/MNIST/lenet.py"]
