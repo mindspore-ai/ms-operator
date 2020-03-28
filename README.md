@@ -28,7 +28,7 @@ MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/reposito
 you can directly fetch the image using the below command:
 
 ```
-docker pull mindspore/mindspore:0.1.0-alpha
+docker pull mindspore/mindspore-cpu:0.1.0-alpha
 ```
 
 ### Design
@@ -41,7 +41,7 @@ metadata:
   name: msjob-mnist
 spec:
   containers:
-  - image: mindspore/mindspore:0.1.0-alpha
+  - image: mindspore/mindspore-cpu:0.1.0-alpha
     imagePullPolicy: IfNotPresent
     name: msjob-mnist
     command: ["/bin/bash", "-c", "python /tmp/test/MNIST/lenet.py"]
@@ -92,7 +92,7 @@ The MindSpore image we download from docker hub is `0.1.0-alpha` version:
 
 ```
 REPOSITORY                          TAG                   IMAGE ID            CREATED             SIZE
-mindspore/mindspore                 0.1.0-alpha           1cefbd0f7846        2 days ago          1.69GB
+mindspore/mindspore-cpu:            0.1.0-alpha           1cefbd0f7846        2 days ago          1.69GB
 ```
 
 MindSpore supports heterogeneous computing including multiple hardware and
@@ -217,7 +217,7 @@ spec:
       template:
         spec:
           containers:
-          - image: mindspore/mindspore:0.1.0-alpha
+          - image: mindspore/mindspore-cpu:0.1.0-alpha
             imagePullPolicy: IfNotPresent
             name: msjob-mnist
             command: ["/bin/bash", "-c", "python /tmp/test/MNIST/lenet.py"]
@@ -240,7 +240,7 @@ spec:
       template:
         spec:
           containers:
-          - image: mindspore/mindspore:0.1.0-alpha
+          - image: mindspore/mindspore-cpu:0.1.0-alpha
             imagePullPolicy: IfNotPresent
             name: msjob-mnist
             command: ["/bin/bash", "-c", "python /tmp/test/MNIST/lenet.py"]
