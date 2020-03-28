@@ -1,0 +1,47 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ms-operator
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: ms-operator
+    spec:
+{{- if .Values.rbac.install }}
+      serviceAccountName: ms-operator
+{{- end }}
+      containers:
+      - name: ms-operator
+        image: {{ .Values.image }}
+        imagePullPolicy: IfNotPresent
+        command:
+          - /ms-operator
+          {{- if .Values.config.configmap }}
+          - --controller-config-file={{ .Values.config.file }}
+          {{- else if .Values.cloud }}
+          - --controller-config-file=/etc/config/controller-config-file.yaml
+          {{- end }}
+          - -alsologtostderr
+          - -v=1
+      {{- if .Values.config.configmap }}
+        env:
+          - name: KUBEFLOW_NAMESPACE
+            value: {{ .Release.namespace }}
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Values.config.configmap }}
+      {{- else if .Values.cloud  }}
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: ms-operator-config
+      {{- end }}

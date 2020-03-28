@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: msjob-mnist
+spec:
+  containers:
+  - image: mindspore/mindspore:0.1.0-alpha
+    imagePullPolicy: IfNotPresent
+    name: msjob-mnist
+    command: ["/bin/bash", "-c", "python /tmp/test/MNIST/lenet.py"]
+    volumeMounts:
+      - name: training-result
+        mountPath: /tmp/result
+      - name: ms-mnist
+        mountPath: /tmp/test
+  restartPolicy: OnFailure
+  volumes:
+    - name: training-result
+      emptyDir: {}
+    - name: ms-mnist
+      hostPath:
+        path: /root/gopath/src/gitee.com/mindspore/ms-operator/examples/
