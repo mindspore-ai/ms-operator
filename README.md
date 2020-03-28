@@ -24,7 +24,7 @@ This project defines the following:
 
 ### MindSpore Docker Image
 
-MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/repository/docker/mindspore/mindspore),
+MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/r/mindspore/mindspore-cpu),
 you can directly fetch the image using the below command:
 
 ```
