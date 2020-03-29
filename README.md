@@ -1,6 +1,17 @@
-# Mindspore Operator
+# MindSpore Operator
 
 #### Experimental notice: This project is still experimental and only serves as a proof of concept for running MindSpore on Kubernetes. The current version of ms-operator is based on an early version of [PyTorch Operator](https://github.com/kubeflow/pytorch-operator) and [TF Operator](https://github.com/kubeflow/tf-operator). Right now MindSpore supports running LeNet with MNIST dataset on a single node, distributed training examples are expected in the near future.
+
+- [MindSpore Operator](#mindspore-operator)
+  - [Introduction of MindSpore and ms-operator](#introduction-of-mindspore-and-ms-operator)
+    - [MindSpore Docker Image](#mindspore-docker-image)
+    - [Design](#Design)
+    - [Overview of MindSpore in Kubeflow Ecosystem](#overview-of-mindspore-in-kubeflow-ecosystem)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Steps of running the example](#steps-of-running-the-example)
+  - [Future Work](#future-work)
+  - [Appendix: Example yaml file](#appendix:-example-yaml-file)
 
 ## Introduction of MindSpore and ms-operator
 
@@ -24,9 +35,12 @@ This project defines the following:
 
 ### MindSpore Docker Image
 
-MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/r/mindspore/mindspore-cpu),
-you can directly fetch the image using the below command:
+MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/r/mindspore), currently both `CPU` and `GPU` are supported as follows:
+- CPU: `mindspore/mindspore-cpu:0.1.0-alpha`
+- GPU (Cuda 10.1): `mindspore/mindspore-cuda10.1:0.1.0-alpha`
+- GPU (Cuda 9.2): `mindspore/mindspore-cuda9.2:0.1.0-alpha`
 
+Take CPU for example, you can directly pull the image using the below command:
 ```
 docker pull mindspore/mindspore-cpu:0.1.0-alpha
 ```
@@ -61,38 +75,42 @@ spec:
 
 ### Overview of MindSpore in Kubeflow Ecosystem
 
-![ms-operator in kubeflow](./docs/pics/ms_operator_in_kubeflow.png)
+<img src="./docs/pics/ms-operator-in-kubeflow.png" alt="ms-operator in Kubeflow" width=600/>
 
 The high-level view of how MindSpore fits in the ecosystem of Kubeflow and its
 components.
 
-## Prerequisites
+## Getting Started
 
-- [Helm and Tiller](https://github.com/helm/helm/releases/tag/v2.9.0): v2.9.0
-- [go](https://github.com/golang/go/releases/tag/go1.12.1): go1.12.1
-- [docker](https://github.com/docker/docker-ce/releases/tag/v18.06.1-ce): 18.06.1-ce
-- [Kubernetes](https://github.com/kubernetes/kubernetes/releases/tag/v1.14.0): v1.14.0
+### Prerequisites
 
-## Steps of running the example
+- [Helm and Tiller](https://github.com/helm/helm/releases/tag/v2.9.0): `v2.9.0`
+- [go](https://github.com/golang/go/releases/tag/go1.12.1): `go1.12.1`
+- [docker](https://github.com/docker/docker-ce/releases/tag/v18.06.1-ce): `v18.06.1-ce`
+- [Kubernetes](https://github.com/kubernetes/kubernetes/releases/tag/v1.14.0): `v1.14.0`
 
-First, build the ms-operator image:
+### Steps of running the example
 
+First, pull the ms-operator image from [Docker Hub](https://hub.docker.com/r/mindspore):
 ```
-docker build -t ms-operator .
+docker pull mindspore/ms-operator:latest
+```
+
+Or you build the ms-operator image on local machine:
+```
+docker build . -t mindspore/ms-operator
 ```
 
 After the installation, check the image status using `docker images` command:
-
 ```
-REPOSITORY                          TAG                   IMAGE ID            CREATED             SIZE
-ms-operator                         latest                729960ae415e        28 hours ago        175MB
+REPOSITORY                        TAG                   IMAGE ID            CREATED             SIZE
+mindspore/ms-operator             latest                729960ae415e        28 hours ago        175MB
 ```
 
 The MindSpore image we download from docker hub is `0.1.0-alpha` version:
-
 ```
-REPOSITORY                          TAG                   IMAGE ID            CREATED             SIZE
-mindspore/mindspore-cpu:            0.1.0-alpha           1cefbd0f7846        2 days ago          1.69GB
+REPOSITORY                        TAG                   IMAGE ID            CREATED             SIZE
+mindspore/mindspore-cpu           0.1.0-alpha           9a124f33ed27        2 hours ago         1.19GB
 ```
 
 MindSpore supports heterogeneous computing including multiple hardware and
@@ -100,14 +118,12 @@ backends (`CPU`, `GPU`, `Ascend`), the device_target of MindSpore is
 `Ascend` by default but we will use the CPU version here.
 
 Install the msjob crd, ms-operator deployment and pod:
-
 ```
-RBAC=true #set false if you do not have an RBAC cluster
+RBAC=true # set false if you do not have an RBAC cluster
 helm install ms-operator-chart/ -n ms-operator --set rbac.install=${RBAC} --wait --replace
 ```
 
 Using `helm status ms-operator` command to check generated resources:
-
 ```
 LAST DEPLOYED: Tue Mar 24 11:36:51 2020
 NAMESPACE: default
@@ -129,13 +145,11 @@ ms-operator-7b5b457d69-dpd2b  1/1    Running  0         1d
 
 We will do a MNIST training to check the eligibility of MindSpore running on
 Kubernetes:
-
 ```
 cd examples/ && kubectl apply -f ms-mnist.yaml
 ```
 
 The job is simply importing MindSpore packges, the dataset is already included in the `MNIST_Data` folder, executing only one epoch and printing result which should only consume little time. After the job completed, you should be able to check the job status and see the result logs. You can check the source training code in `examples/` folder.
-
 ```
 kubectl get pod msjob-mnist && kubectl logs msjob-mnist
 ```
@@ -160,7 +174,7 @@ still working on implementing distributed training of LeNet with MNIST dataset
 on Kubernetes, together with the distributed training on different backends
 (GPU || `Ascend`) are also expected in the near future.
 
-## Future work
+## Future Work
 
 [Kubeflow](https://github.com/kubeflow/kubeflow) just announced its first major
 1.0 release recently with the graduation of a core set of stable applications
@@ -198,10 +212,9 @@ dependent resources, and reconcile the desired states. If MindSpore can leverage
 MPI Operator together with the high performance `Ascend` processor, it is
 possible that MindSpore will bring distributed training to an even higher level.
 
-### Example yaml file
+## Appendix: Example yaml file
 
-The yaml file to create distributed training MSJob expected to be like this: 
-
+The yaml file to create distributed training MSJob expected to be like this:
 ```yaml
 # WIP example for distributed training
 apiVersion: "kubeflow.org/v1"
