@@ -1,2 +1,2 @@
-# go package
-Gopkg.lock
+# Mac files
+*.DS_Store
