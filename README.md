@@ -4,14 +4,17 @@
 
 - [MindSpore Operator](#mindspore-operator)
   - [Introduction of MindSpore and ms-operator](#introduction-of-mindspore-and-ms-operator)
-    - [MindSpore Docker Image](#mindspore-docker-image)
+    - [MindSpore docker image](#mindspore-docker-image)
     - [Design](#Design)
-    - [Overview of MindSpore in Kubeflow Ecosystem](#overview-of-mindspore-in-kubeflow-ecosystem)
+    - [Overview of MindSpore in Kubeflow ecosystem](#overview-of-mindspore-in-kubeflow-ecosystem)
   - [Getting Started](#getting-started)
     - [Prerequisites](#prerequisites)
     - [Steps of running the example](#steps-of-running-the-example)
   - [Future Work](#future-work)
   - [Appendix: Example yaml file](#appendix:-example-yaml-file)
+  - [Community](#community)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Introduction of MindSpore and ms-operator
 
@@ -24,7 +27,7 @@ processor, and software hardware co-optimization.
 This project contains the specification and implementation of MSJob custom
 resource definition. We will demonstrate running a walkthrough of creating
 ms-operator, as well as MNIST training job on Kubernetes with MindSpore
-0.1.0-alpha image (x86 CPU build version) on a single node. More completed
+`0.1.0-alpha` image (x86 CPU build version) on a single node. More completed
 features will be developed in the coming days.
 
 This project defines the following:
@@ -33,17 +36,10 @@ This project defines the following:
 - MindSpore LeNet MNIST training example
 - Future goal: distributed MindSpore training example
 
-### MindSpore Docker Image
+### MindSpore docker image
 
-MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/r/mindspore), currently both `CPU` and `GPU` are supported as follows:
-- CPU: `mindspore/mindspore-cpu:0.1.0-alpha`
-- GPU (Cuda 10.1): `mindspore/mindspore-cuda10.1:0.1.0-alpha`
-- GPU (Cuda 9.2): `mindspore/mindspore-cuda9.2:0.1.0-alpha`
-
-Take CPU for example, you can directly pull the image using the below command:
-```
-docker pull mindspore/mindspore-cpu:0.1.0-alpha
-```
+Please refer to MindSpore [docker image introduction](https://gitee.com/mindspore/mindspore/blob/master/README.md#docker-image)
+for details.
 
 ### Design
 
@@ -73,7 +69,7 @@ spec:
         path: /root/gopath/src/gitee.com/mindspore/ms-operator/examples/
 ```
 
-### Overview of MindSpore in Kubeflow Ecosystem
+### Overview of MindSpore in Kubeflow ecosystem
 
 <img src="./docs/pics/ms-operator-in-kubeflow.png" alt="ms-operator in Kubeflow" width=600/>
 
@@ -96,7 +92,7 @@ First, pull the ms-operator image from [Docker Hub](https://hub.docker.com/r/min
 docker pull mindspore/ms-operator:latest
 ```
 
-Or you build the ms-operator image on local machine:
+Or you can build the ms-operator image on local machine:
 ```
 docker build . -t mindspore/ms-operator
 ```
@@ -110,7 +106,7 @@ mindspore/ms-operator             latest                729960ae415e        28 h
 The MindSpore image we download from docker hub is `0.1.0-alpha` version:
 ```
 REPOSITORY                        TAG                   IMAGE ID            CREATED             SIZE
-mindspore/mindspore-cpu           0.1.0-alpha           9a124f33ed27        2 hours ago         1.19GB
+mindspore/mindspore-cpu           0.1.0-alpha           9a124f33ed27        2 hours ago         1.16GB
 ```
 
 MindSpore supports heterogeneous computing including multiple hardware and
@@ -149,7 +145,7 @@ Kubernetes:
 cd examples/ && kubectl apply -f ms-mnist.yaml
 ```
 
-The job is simply importing MindSpore packges, the dataset is already included in the `MNIST_Data` folder, executing only one epoch and printing result which should only consume little time. After the job completed, you should be able to check the job status and see the result logs. You can check the source training code in `examples/` folder.
+The job is simply importing MindSpore packages, the dataset is already included in the `MNIST_Data` folder, executing only one epoch and printing result which should only consume little time. After the job completed, you should be able to check the job status and see the result logs. You can check the source training code in `examples/` folder.
 ```
 kubectl get pod msjob-mnist && kubectl logs msjob-mnist
 ```
@@ -186,7 +182,7 @@ including:
 - etc.
 
 The MindSpore community is driving to collaborate with the Kubeflow community
-as well as making the ms-operator more complex, well-orgnized and its 
+as well as making the ms-operator more complex, well-organized and its
 dependencies up-to-date. All these components make it easy for machine learning
 engineers and data scientists to leverage cloud assets (public or on-premise)
 for machine learning workloads.
@@ -283,3 +279,15 @@ including multiple hardware and backends (`CPU`, `GPU`, `Ascend`),
 the device_target of MindSpore is `Ascend` by default.
 
 We define `masterPort` that groups will use to communicate with master service.
+
+## Community
+
+- [MindSpore Slack](https://join.slack.com/t/mindspore/shared_invite/enQtOTcwMTIxMDI3NjM0LTNkMWM2MzI5NjIyZWU5ZWQ5M2EwMTQ5MWNiYzMxOGM4OWFhZjI4M2E5OGI2YTg3ODU1ODE2Njg1MThiNWI3YmQ) - Ask questions and find answers.
+
+## Contributing
+
+Welcome contributions. See our [Contributor Wiki](https://gitee.com/mindspore/mindspore/blob/master/CONTRIBUTING.md) for more details.
+
+## License
+
+[Apache License 2.0](LICENSE)
