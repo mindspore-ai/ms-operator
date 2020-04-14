@@ -80,6 +80,7 @@ components.
 
 ### Prerequisites
 
+- [Ubuntu](http://releases.ubuntu.com/16.04/): `16.04.6 LTS`
 - [Helm and Tiller](https://github.com/helm/helm/releases/tag/v2.9.0): `v2.9.0`
 - [go](https://github.com/golang/go/releases/tag/go1.12.1): `go1.12.1`
 - [docker](https://github.com/docker/docker-ce/releases/tag/v18.06.1-ce): `v18.06.1-ce`
@@ -94,13 +95,14 @@ docker pull mindspore/ms-operator:latest
 
 Or you can build the ms-operator image on local machine:
 ```
+go build -o ms-operator cmd/ms-operator.v1/main.go
 docker build . -t mindspore/ms-operator
 ```
 
 After the installation, check the image status using `docker images` command:
 ```
 REPOSITORY                        TAG                   IMAGE ID            CREATED             SIZE
-mindspore/ms-operator             latest                729960ae415e        28 hours ago        175MB
+mindspore/ms-operator             latest                b3785ad45c0a        14 minutes ago      111MB
 ```
 
 The MindSpore image we download from docker hub is `0.1.0-alpha` version:
