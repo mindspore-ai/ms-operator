@@ -1,5 +1,5 @@
-FROM debian:jessie
+FROM ubuntu:18.04
 
-COPY cmd/ms-operator.v1/ms-operator /ms-operator
+COPY ms-operator /ms-operator
 
 ENTRYPOINT ["/ms-operator", "-alsologtostderr"]
