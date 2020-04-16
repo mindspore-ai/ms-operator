@@ -95,14 +95,14 @@ docker pull mindspore/ms-operator:latest
 
 Or you can build the ms-operator image on local machine:
 ```
-go build -o ms-operator cmd/ms-operator.v1/main.go
+go build -ldflags '-w -s' -o ms-operator cmd/ms-operator.v1/main.go
 docker build . -t mindspore/ms-operator
 ```
 
 After the installation, check the image status using `docker images` command:
 ```
 REPOSITORY                        TAG                   IMAGE ID            CREATED             SIZE
-mindspore/ms-operator             latest                b3785ad45c0a        14 minutes ago      111MB
+mindspore/ms-operator             latest                4a17028de3d3        5 minutes ago       97.8MB
 ```
 
 The MindSpore image we download from docker hub is `0.1.0-alpha` version:
