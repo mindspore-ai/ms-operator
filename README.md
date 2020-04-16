@@ -108,7 +108,7 @@ mindspore/ms-operator             latest                4a17028de3d3        5 mi
 The MindSpore image we download from docker hub is `0.1.0-alpha` version:
 ```
 REPOSITORY                        TAG                   IMAGE ID            CREATED             SIZE
-mindspore/mindspore-cpu           0.1.0-alpha           9a124f33ed27        2 hours ago         1.16GB
+mindspore/mindspore-cpu           0.1.0-alpha           ef443be923bc        3 hours ago         1.05GB
 ```
 
 MindSpore supports heterogeneous computing including multiple hardware and
