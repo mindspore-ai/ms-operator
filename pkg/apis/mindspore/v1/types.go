@@ -45,7 +45,6 @@ type MSJob struct {
 }
 
 type MSJobSpec struct {
-	// TODO(jlewi): Can we we get rid of this and use some value from Kubernetes or a random ide.
 	RuntimeId string
 
 	// ReplicaSpecs specifies the MS replicas to run.
@@ -81,11 +80,9 @@ const (
 
 const (
 	DefaultMSContainer string = "mindspore"
-	DefaultMSImage     string = "mindspore/mindspore:v0.1.0"
+	DefaultMSImage     string = "mindspore/mindspore:v0.1.0-alpha"
 )
 
-// TODO(jlewi): We probably want to add a name field. This would allow us to have more than 1 type of each worker.
-// This might be useful if you wanted to have a separate set of workers to do eval.
 type MSReplicaSpec struct {
 	// Replicas is the number of desired replicas.
 	// This is a pointer to distinguish between explicit zero and unspecified.

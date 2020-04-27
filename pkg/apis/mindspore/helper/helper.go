@@ -106,8 +106,7 @@ func ConfigureAcceleratorsForMSJobSpec(c *msv1.MSJobSpec, accelerators map[strin
 // Cleanup cleans up user passed spec, e.g. defaulting, transforming fields.
 // TODO: move this to admission controller
 func Cleanup(c *msv1.MSJobSpec) {
-	// TODO(jlewi): Add logic to cleanup user provided spec; e.g. by filling in defaults.
-	// We should have default container images so user doesn't have to provide these.
+
 }
 
 func CRDName() string {

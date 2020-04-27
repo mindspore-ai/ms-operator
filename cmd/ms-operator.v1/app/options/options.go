@@ -37,7 +37,7 @@ func NewServerOption() *ServerOption {
 // AddFlags adds flags for a specific CMServer to the specified FlagSet
 func (s *ServerOption) AddFlags(fs *flag.FlagSet) {
 	// chaos level will be removed once we have a formal tool to inject failures.
-	fs.IntVar(&s.ChaosLevel, "chaos-level", -1, "DO NOT USE IN PRODUCTION - level of chaos injected into the PyTorchJob created by the operator.")
+	fs.IntVar(&s.ChaosLevel, "chaos-level", -1, "DO NOT USE IN PRODUCTION - level of chaos injected into the MSJob created by the operator.")
 	fs.BoolVar(&s.PrintVersion, "version", false, "Show version and quit")
 	fs.DurationVar(&s.GCInterval, "gc-interval", 10*time.Minute, "GC interval")
 	fs.StringVar(&s.ControllerConfigFile, "controller-config-file", "", "Path to file containing the controller config.")

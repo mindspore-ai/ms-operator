@@ -57,7 +57,7 @@ func ValidateMSJobSpec(c *msv1.MSJobSpec) error {
 		}
 
 		if !isValidReplicaType {
-			return fmt.Errorf("tfReplicaSpec.MSReplicaType is %v but must be one of %v", r.MSReplicaType, validReplicaTypes)
+			return fmt.Errorf("msReplicaSpec.MSReplicaType is %v but must be one of %v", r.MSReplicaType, validReplicaTypes)
 		}
 
 		for _, c := range r.Template.Spec.Containers {
