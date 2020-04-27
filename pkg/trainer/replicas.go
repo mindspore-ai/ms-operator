@@ -29,9 +29,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/record"
 
-	torchv1alpha1 "gitee.com/mindspore/ms-operator/pkg/apis/mindspore/v1"
+	msv1 "gitee.com/mindspore/ms-operator/pkg/apis/mindspore/v1"
 	"gitee.com/mindspore/ms-operator/pkg/util/k8sutil"
-	// TOOO(jlewi): Rename to apiErrors
 	"gitee.com/mindspore/ms-operator/pkg/apis/mindspore/helper"
 	"gitee.com/mindspore/ms-operator/pkg/util"
 )
@@ -47,53 +46,53 @@ type MSReplicaSet struct {
 	recorder  record.EventRecorder
 	// Job is a pointer to the TrainingJob to which this replica belongs.
 	Job  *TrainingJob
-	Spec torchv1alpha1.MSReplicaSpec
+	Spec msv1.MSReplicaSpec
 }
 
 // MSReplicas is an interface for managing a set of replicas.
 type MSReplicaSetInterface interface {
 	Create() error
 	Delete() error
-	GetStatus() (torchv1alpha1.MSReplicaStatus, error)
+	GetStatus() (msv1.MSReplicaStatus, error)
 }
 
-// MSConfig is a struct representing the TensorFlow config. This struct is turned into an environment
-// which is used by TensorFlow processes to configure themselves.
+// MSConfig is a struct representing the MindSpore config. This struct is turned into an environment
+// which is used by MindSpore processes to configure themselves.
 type MSConfig struct {
 	Cluster     ClusterSpec `json:"cluster"`
 	Task        TaskSpec    `json:"task"`
 	Environment string      `json:"environment"`
 }
 
-func NewMSReplicaSet(clientSet kubernetes.Interface, recorder record.EventRecorder, tfReplicaSpec torchv1alpha1.MSReplicaSpec, job *TrainingJob) (*MSReplicaSet, error) {
-	if tfReplicaSpec.MSReplicaType == torchv1alpha1.MASTER && *tfReplicaSpec.Replicas != 1 {
+func NewMSReplicaSet(clientSet kubernetes.Interface, recorder record.EventRecorder, msReplicaSpec msv1.MSReplicaSpec, job *TrainingJob) (*MSReplicaSet, error) {
+	if msReplicaSpec.MSReplicaType == msv1.MASTER && *msReplicaSpec.Replicas != 1 {
 		return nil, errors.New("The MASTER must have Replicas = 1")
 	}
 
-	if tfReplicaSpec.MasterPort == nil {
-		return nil, errors.New("tfReplicaSpec.MasterPort can't be nil.")
+	if msReplicaSpec.MasterPort == nil {
+		return nil, errors.New("msReplicaSpec.MasterPort can't be nil.")
 	}
 
 	// Make sure the replica type is valid.
-	validReplicaTypes := []torchv1alpha1.MSReplicaType{torchv1alpha1.MASTER, torchv1alpha1.WORKER}
+	validReplicaTypes := []msv1.MSReplicaType{msv1.MASTER, msv1.WORKER}
 
 	isValidReplicaType := false
 	for _, t := range validReplicaTypes {
-		if t == tfReplicaSpec.MSReplicaType {
+		if t == msReplicaSpec.MSReplicaType {
 			isValidReplicaType = true
 			break
 		}
 	}
 
 	if !isValidReplicaType {
-		return nil, fmt.Errorf("tfReplicaSpec.MSReplicaType is %v but must be one of %v", tfReplicaSpec.MSReplicaType, validReplicaTypes)
+		return nil, fmt.Errorf("msReplicaSpec.MSReplicaType is %v but must be one of %v", msReplicaSpec.MSReplicaType, validReplicaTypes)
 	}
 
 	return &MSReplicaSet{
 		ClientSet: clientSet,
 		recorder:  recorder,
 		Job:       job,
-		Spec:      tfReplicaSpec,
+		Spec:      msReplicaSpec,
 	}, nil
 }
 
@@ -108,7 +107,7 @@ func (s *MSReplicaSet) Labels() KubernetesLabels {
 		"ms_job_name": s.Job.job.ObjectMeta.Name})
 }
 
-func (s *MSReplicaSet) Create(config *torchv1alpha1.ControllerConfig, worldSize int32) error {
+func (s *MSReplicaSet) Create(config *msv1.ControllerConfig, worldSize int32) error {
 	// Create services
 	err := s.SyncServices()
 	if err != nil {
@@ -137,7 +136,7 @@ func (s *MSReplicaSet) CreateServiceWithIndex(index int32) (*v1.Service, error) 
 			Selector: taskLabels,
 			Ports: []v1.ServicePort{
 				{
-					Name: "tf-port",
+					Name: "ms-port",
 					Port: *s.Spec.MasterPort,
 				},
 			},
@@ -173,7 +172,7 @@ func (s *MSReplicaSet) CreatePodWithIndex(index int32, worldSize int32) (*v1.Pod
 		masterAddr = "localhost"
 	}
 	rank := strconv.Itoa(int(index))
-	tfConfig := MSConfig{
+	msConfig := MSConfig{
 		Cluster: s.Job.ClusterSpec(),
 		Task: TaskSpec{
 			Type:  strings.ToLower(string(s.Spec.MSReplicaType)),
@@ -183,27 +182,26 @@ func (s *MSReplicaSet) CreatePodWithIndex(index int32, worldSize int32) (*v1.Pod
 		Environment: "cloud",
 	}
 
-	tfConfigJson, err := json.Marshal(tfConfig)
+	msConfigJson, err := json.Marshal(msConfig)
 	if err != nil {
-		log.Errorf("Job: %v serializing tfConfig: %v return error; %v", s.Job.job.ObjectMeta.Name, util.Pformat(tfConfig), err)
+		log.Errorf("Job: %v serializing msConfig: %v return error; %v", s.Job.job.ObjectMeta.Name, util.Pformat(msConfig), err)
 		return nil, err
 	}
 
-	// TODO(jose5918) Do not need TF_CONFIG but leaving for POC
-	// Add TF_CONFIG environment variable.
+	// Add MS_CONFIG environment variable.
 	for i, _ := range pod.Spec.Containers {
 		// We can't get c in the loop variable because that would be by value so our modifications
 		// wouldn't have any effect.
 		c := &pod.Spec.Containers[i]
-		if c.Name != torchv1alpha1.DefaultMSContainer {
+		if c.Name != msv1.DefaultMSContainer {
 			continue
 		}
 		if len(c.Env) == 0 {
 			c.Env = make([]v1.EnvVar, 0)
 		}
 		c.Env = append(c.Env, v1.EnvVar{
-			Name:  "TF_CONFIG",
-			Value: string(tfConfigJson),
+			Name:  "MS_CONFIG",
+			Value: string(msConfigJson),
 		})
 		c.Env = append(c.Env, v1.EnvVar{
 			Name:  "MASTER_PORT",
@@ -258,7 +256,6 @@ func (s *MSReplicaSet) Delete() error {
 	}
 
 	// Services doesn't support DeleteCollection so we delete them individually.
-	// TODO(jlewi): We should check if this has changed with K8s 1.8 or other releases.
 	for index := int32(0); index < *s.Spec.Replicas; index++ {
 		log.V(1).Infof("Deleting Service %v:%v", s.Job.job.ObjectMeta.Namespace, s.genName((index)))
 		err = s.ClientSet.CoreV1().Services(s.Job.job.ObjectMeta.Namespace).Delete(s.genName(index), &meta_v1.DeleteOptions{})
@@ -269,17 +266,17 @@ func (s *MSReplicaSet) Delete() error {
 		}
 	}
 
-	// If the ConfigMap for the default parameter server exists, we delete it
-	log.Infof("Get ConfigMaps %v:%v", s.Job.job.ObjectMeta.Namespace, s.defaultPSConfigMapName())
-	_, err = s.ClientSet.CoreV1().ConfigMaps(s.Job.job.ObjectMeta.Namespace).Get(s.defaultPSConfigMapName(), meta_v1.GetOptions{})
+	// If the ConfigMap for the default master exists, we delete it
+	log.Infof("Get ConfigMaps %v:%v", s.Job.job.ObjectMeta.Namespace, s.defaultMasterConfigMapName())
+	_, err = s.ClientSet.CoreV1().ConfigMaps(s.Job.job.ObjectMeta.Namespace).Get(s.defaultMasterConfigMapName(), meta_v1.GetOptions{})
 	if err != nil {
 		if !k8sutil.IsKubernetesResourceNotFoundError(err) {
-			log.Errorf("Error deleting ConfigMap %v; %v", s.defaultPSConfigMapName(), err)
+			log.Errorf("Error deleting ConfigMap %v; %v", s.defaultMasterConfigMapName(), err)
 			failures = true
 		}
 	} else {
-		log.Infof("Delete ConfigMaps %v:%v", s.Job.job.ObjectMeta.Namespace, s.defaultPSConfigMapName())
-		err = s.ClientSet.CoreV1().ConfigMaps(s.Job.job.ObjectMeta.Namespace).Delete(s.defaultPSConfigMapName(), &meta_v1.DeleteOptions{})
+		log.Infof("Delete ConfigMaps %v:%v", s.Job.job.ObjectMeta.Namespace, s.defaultMasterConfigMapName())
+		err = s.ClientSet.CoreV1().ConfigMaps(s.Job.job.ObjectMeta.Namespace).Delete(s.defaultMasterConfigMapName(), &meta_v1.DeleteOptions{})
 		if err != nil {
 			log.Errorf("There was a problem deleting the ConfigMaps; %v", err)
 			failures = true
@@ -293,7 +290,7 @@ func (s *MSReplicaSet) Delete() error {
 }
 
 // replicaStatusFromPodList returns a status from a list of pods for a job.
-func replicaStatusFromPodList(l v1.PodList, name string) torchv1alpha1.ReplicaState {
+func replicaStatusFromPodList(l v1.PodList, name string) msv1.ReplicaState {
 	var latest *v1.Pod
 	for _, i := range l.Items {
 		if latest == nil {
@@ -306,10 +303,10 @@ func replicaStatusFromPodList(l v1.PodList, name string) torchv1alpha1.ReplicaSt
 	}
 
 	if latest == nil {
-		return torchv1alpha1.ReplicaStateRunning
+		return msv1.ReplicaStateRunning
 	}
 
-	var tfState v1.ContainerState
+	var msState v1.ContainerState
 
 	for _, i := range latest.Status.ContainerStatuses {
 		if i.Name != name {
@@ -317,45 +314,45 @@ func replicaStatusFromPodList(l v1.PodList, name string) torchv1alpha1.ReplicaSt
 		}
 
 		// We need to decide whether to use the current state or the previous termination state.
-		tfState = i.State
+		msState = i.State
 
 		// If the container previously terminated we will look at the termination to decide whether it is a retryable
 		// or permanenent error.
 		if i.LastTerminationState.Terminated != nil {
-			tfState = i.LastTerminationState
+			msState = i.LastTerminationState
 		}
 	}
 
-	if tfState.Running != nil || tfState.Waiting != nil {
-		return torchv1alpha1.ReplicaStateRunning
+	if msState.Running != nil || msState.Waiting != nil {
+		return msv1.ReplicaStateRunning
 	}
 
-	if tfState.Terminated != nil {
-		if tfState.Terminated.ExitCode == 0 {
-			return torchv1alpha1.ReplicaStateSucceeded
+	if msState.Terminated != nil {
+		if msState.Terminated.ExitCode == 0 {
+			return msv1.ReplicaStateSucceeded
 		}
 
-		if isRetryableTerminationState(tfState.Terminated) {
+		if isRetryableTerminationState(msState.Terminated) {
 			// Since its a retryable error just return RUNNING.
 			// We can just let Kubernetes restart the container to retry.
-			return torchv1alpha1.ReplicaStateRunning
+			return msv1.ReplicaStateRunning
 		}
 
-		return torchv1alpha1.ReplicaStateFailed
+		return msv1.ReplicaStateFailed
 	}
 
-	return torchv1alpha1.ReplicaStateUnknown
+	return msv1.ReplicaStateUnknown
 }
 
-func (s *MSReplicaSet) GetSingleReplicaStatus(index int32) torchv1alpha1.ReplicaState {
+func (s *MSReplicaSet) GetSingleReplicaStatus(index int32) msv1.ReplicaState {
 	p, err := s.ClientSet.CoreV1().Pods(s.Job.job.ObjectMeta.Namespace).Get(s.genName(index), meta_v1.GetOptions{})
 
 	if err != nil {
-		return torchv1alpha1.ReplicaStateUnknown
+		return msv1.ReplicaStateUnknown
 	}
 
 	if v1.PodSucceeded == p.Status.Phase {
-		return torchv1alpha1.ReplicaStateSucceeded
+		return msv1.ReplicaStateSucceeded
 	}
 
 	labels := s.Labels()
@@ -363,33 +360,30 @@ func (s *MSReplicaSet) GetSingleReplicaStatus(index int32) torchv1alpha1.Replica
 	selector, err := labels.ToSelector()
 	if err != nil {
 		log.Errorf("labels.ToSelector() error; %v", err)
-		return torchv1alpha1.ReplicaStateFailed
+		return msv1.ReplicaStateFailed
 	}
 
-	// TODO(jlewi): Handle errors. We need to get the pod and looking at recent container exits.
 	l, err := s.ClientSet.CoreV1().Pods(s.Job.job.ObjectMeta.Namespace).List(meta_v1.ListOptions{
-		// TODO(jlewi): Why isn't the label selector working?
 		LabelSelector: selector,
 	})
 
 	if err != nil {
-		// TODO(jlewi): Are there errors that should be treated as retryable errors?
-		return torchv1alpha1.ReplicaStateFailed
+		return msv1.ReplicaStateFailed
 	}
 
-	status := replicaStatusFromPodList(*l, torchv1alpha1.DefaultMSContainer)
+	status := replicaStatusFromPodList(*l, msv1.DefaultMSContainer)
 	return status
 }
 
 // Status returns the status of the replica set.
-func (s *MSReplicaSet) GetStatus() (torchv1alpha1.MSReplicaStatus, error) {
-	status := torchv1alpha1.MSReplicaStatus{
+func (s *MSReplicaSet) GetStatus() (msv1.MSReplicaStatus, error) {
+	status := msv1.MSReplicaStatus{
 		MSReplicaType: s.Spec.MSReplicaType,
-		State:              torchv1alpha1.ReplicaStateUnknown,
-		ReplicasStates:     make(map[torchv1alpha1.ReplicaState]int),
+		State:              msv1.ReplicaStateUnknown,
+		ReplicasStates:     make(map[msv1.ReplicaState]int),
 	}
 
-	increment := func(state torchv1alpha1.ReplicaState) {
+	increment := func(state msv1.ReplicaState) {
 		v, ok := status.ReplicasStates[state]
 		if ok {
 			status.ReplicasStates[state] = v + 1
@@ -405,20 +399,20 @@ func (s *MSReplicaSet) GetStatus() (torchv1alpha1.MSReplicaStatus, error) {
 	// Determine the overall status for the replica set based on the status of the individual
 	// replicas.
 	// If any of the replicas failed mark the set as failed.
-	if _, ok := status.ReplicasStates[torchv1alpha1.ReplicaStateFailed]; ok {
-		status.State = torchv1alpha1.ReplicaStateFailed
+	if _, ok := status.ReplicasStates[msv1.ReplicaStateFailed]; ok {
+		status.State = msv1.ReplicaStateFailed
 		return status, nil
 	}
 
 	// If any replicas are RUNNING mark it as RUNNING.
-	if _, ok := status.ReplicasStates[torchv1alpha1.ReplicaStateRunning]; ok {
-		status.State = torchv1alpha1.ReplicaStateRunning
+	if _, ok := status.ReplicasStates[msv1.ReplicaStateRunning]; ok {
+		status.State = msv1.ReplicaStateRunning
 		return status, nil
 	}
 
 	// If all of the replicas succeeded consider it success.
-	if v, ok := status.ReplicasStates[torchv1alpha1.ReplicaStateSucceeded]; ok && int32(v) == *s.Spec.Replicas {
-		status.State = torchv1alpha1.ReplicaStateSucceeded
+	if v, ok := status.ReplicasStates[msv1.ReplicaStateSucceeded]; ok && int32(v) == *s.Spec.Replicas {
+		status.State = msv1.ReplicaStateSucceeded
 		return status, nil
 	}
 
@@ -515,7 +509,7 @@ func (s *MSReplicaSet) SyncServices() error {
 }
 
 func (s *MSReplicaSet) genName(index int32) string {
-	// Truncate tfjob name to 40 characters
+	// Truncate msjob name to 40 characters
 	// The whole job name should be compliant with the DNS_LABEL spec, up to a max length of 63 characters
 	// Thus genName(40 chars)-replicaType(6 chars)-runtimeId(4 chars)-index(4 chars), also leaving some spaces
 	// See https://github.com/kubernetes/community/blob/master/contributors/design-proposals/architecture/identifiers.md
@@ -527,7 +521,7 @@ func (s *MSReplicaSet) genPodName(index int32) string {
 	return s.genName(index) + "-" + util.RandString(5)
 }
 
-func (s *MSReplicaSet) defaultPSConfigMapName() string {
+func (s *MSReplicaSet) defaultMasterConfigMapName() string {
 	return fmt.Sprintf("cm-ps-%v", s.Job.job.Spec.RuntimeId)
 }
 

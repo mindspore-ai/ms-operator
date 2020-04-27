@@ -34,8 +34,6 @@ import (
 	"gitee.com/mindspore/ms-operator/pkg/util"
 )
 
-// TODO(jlewi): We should switch a New pattern and make trainingJob private so we can
-// ensure correctness on creation.
 type TrainingJob struct {
 	job *msv1.MSJob
 
@@ -55,9 +53,7 @@ type TrainingJob struct {
 	memberCounter int
 }
 
-// TODO(jose5918): We don't really need the cluster spec for this operator but no harm in leaving it for POC
-// ClusterSpec represents a cluster TensorFlow specification.
-// https://www.tensorflow.org/deploy/distributed#create_a_tftrainclusterspec_to_describe_the_cluster
+// ClusterSpec represents a cluster MindSpore specification.
 // It is a map from job names to network addresses.
 type ClusterSpec map[string][]string
 
@@ -110,7 +106,6 @@ func (j *TrainingJob) ClusterSpec() ClusterSpec {
 
 // createResources creates all the replicas if requested
 func (j *TrainingJob) createResources(config *msv1.ControllerConfig) error {
-	// TODO(jose5918) Need to figure out where it is best to add worldSize logic
 	// Get MS worldSize by adding replicas
 	worldSize := int32(0)
 	for _, r := range j.Replicas {
@@ -144,7 +139,6 @@ func (j *TrainingJob) GetStatus() (msv1.State, []*msv1.MSReplicaStatus, error) {
 	replicaStatuses := make([]*msv1.MSReplicaStatus, 0)
 
 	// The state for each replica.
-	// TODO(jlewi): We will need to modify this code if we want to allow multiples of a given type of replica.
 	replicaSetStates := make(map[msv1.MSReplicaType]msv1.ReplicaState)
 
 	for _, r := range j.Replicas {
@@ -176,8 +170,6 @@ func (j *TrainingJob) GetStatus() (msv1.State, []*msv1.MSReplicaStatus, error) {
 // isRetryableTerminationState returns true if a container terminated in a state
 // that we consider retryable.
 func isRetryableTerminationState(s *v1.ContainerStateTerminated) bool {
-	// TODO(jlewi): Need to match logic in
-	// https://cs.corp.google.com/piper///depot/google3/cloud/ml/beta/job/training_job_state_util.cc?l=88
 	if s.Reason == "OOMKilled" {
 		// If the user's process causes an OOM and Docker kills the container,
 		// the termination reason of ContainerState will be specified to
@@ -189,8 +181,6 @@ func isRetryableTerminationState(s *v1.ContainerStateTerminated) bool {
 		return false
 	}
 
-	// TODO(jlewi): Should we use the exit code reported in the termination
-	// log message and not the ExitCode reported by the container.
 
 	if s.ExitCode >= 0 && s.ExitCode <= 127 {
 		// For the exit_code in [0, 127]:
@@ -271,19 +261,12 @@ func (j *TrainingJob) setupReplicas() error {
 }
 
 func (j *TrainingJob) Delete() {
-	// TODO(jlewi): Delete is what should cause us to delete the Pods.
-	// we shouldn't delete the pods when the jobs finish because leaving the pods
-	// allows us to get the logs from the pods after the job finishes.
-	//
 	log.Infof("MSJob %v deleted by the user", j.fullname())
 	// TODO(jlewi): This logic is probably insufficient.
 	if j.job.Status.Phase != msv1.MSJobPhaseCleanUp {
 		j.status.Phase = msv1.MSJobPhaseCleanUp
 	}
 
-	// TODO(jlewi): Does it make sense to explicitly delete the resources? Should
-	// we just rely on K8s garbage collection to delete the resources before
-	// deleting MSJob?
 	if cErr := j.deleteResources(); cErr != nil {
 		log.Errorf("trainingJob.deleteResources() error; %v", cErr)
 	}
@@ -331,9 +314,6 @@ func (j *TrainingJob) Reconcile(config *msv1.ControllerConfig) error {
 		return err
 	}
 
-	// TODO(jlewi): Can we determine from the CRD status whether we should
-	// Create the resources or not? We need to ensure the resources exist so for
-	// now we always call Create.
 	if j.job.Status.Phase == msv1.MSJobPhaseCreating || j.job.Status.Phase == msv1.MSJobPhaseRunning {
 		// We call Create to make sure all the resources exist and are running.
 		if cErr := j.createResources(config); cErr != nil {
@@ -354,7 +334,6 @@ func (j *TrainingJob) Reconcile(config *msv1.ControllerConfig) error {
 			log.Errorf("GetStatus() for job %v returned error: %v", j.job.ObjectMeta.Name, err)
 			return err
 		}
-		// TODO(jlewi): We should update the Phase if we detect the job is done.
 		if state == msv1.StateFailed {
 			log.Errorf("Master failed Job: %v.", j.job.ObjectMeta.Name)
 			j.status.Phase = msv1.MSJobPhaseDone
@@ -367,7 +346,6 @@ func (j *TrainingJob) Reconcile(config *msv1.ControllerConfig) error {
 			log.Infof("Job %v status=%v", j.job.ObjectMeta.Name, util.Pformat(j.status))
 		}
 	}
-	// TODO(jose5918) Need to figure out where it is best to add worldSize logic
 	// Get MS worldSize by adding replicas
 	worldSize := int32(0)
 	for _, r := range j.Replicas {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package controller provides a Kubernetes controller for a TensorFlow job resource.
+// Package controller provides a Kubernetes controller for a MindSpore job resource.
 package controller
 
 import (
@@ -85,9 +85,9 @@ type Controller struct {
 	syncHandler func(jobKey string) (bool, error)
 }
 
-func New(kubeClient kubernetes.Interface, APIExtclient apiextensionsclient.Interface, tfJobClient msjobclient.Interface,
-	config msv1.ControllerConfig, tfJobInformerFactory informers.SharedInformerFactory) (*Controller, error) {
-	tfJobInformer := tfJobInformerFactory.Kubeflow().V1().MSJobs()
+func New(kubeClient kubernetes.Interface, APIExtclient apiextensionsclient.Interface, msJobClient msjobclient.Interface,
+	config msv1.ControllerConfig, msJobInformerFactory informers.SharedInformerFactory) (*Controller, error) {
+	msJobInformer := msJobInformerFactory.Kubeflow().V1().MSJobs()
 
 	kubeflowscheme.AddToScheme(scheme.Scheme)
 	log.Debug("Creating event broadcaster")
@@ -99,22 +99,21 @@ func New(kubeClient kubernetes.Interface, APIExtclient apiextensionsclient.Inter
 	controller := &Controller{
 		KubeClient:       kubeClient,
 		APIExtclient:     APIExtclient,
-		MSJobClient: tfJobClient,
+		MSJobClient: msJobClient,
 		WorkQueue:        workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), "MSjobs"),
 		recorder:         recorder,
-		// TODO(jlewi)): What to do about cluster.Cluster?
 		jobs:   make(map[string]*trainer.TrainingJob),
 		config: config,
 	}
 
 	log.Info("Setting up event handlers")
 	// Set up an event handler for when Foo resources change
-	tfJobInformer.Informer().AddEventHandler(
+	msJobInformer.Informer().AddEventHandler(
 		cache.FilteringResourceEventHandler{
 			FilterFunc: func(obj interface{}) bool {
 				switch t := obj.(type) {
 				case *msv1.MSJob:
-					log.Debugf("filter tfjob name: %v", t.Name)
+					log.Debugf("filter msjob name: %v", t.Name)
 					return true
 				default:
 					return false
@@ -129,8 +128,8 @@ func New(kubeClient kubernetes.Interface, APIExtclient apiextensionsclient.Inter
 			},
 		})
 
-	controller.MSJobLister = tfJobInformer.Lister()
-	controller.MSJobSynced = tfJobInformer.Informer().HasSynced
+	controller.MSJobLister = msJobInformer.Lister()
+	controller.MSJobSynced = msJobInformer.Informer().HasSynced
 	controller.syncHandler = controller.syncMSJob
 
 	return controller, nil
@@ -216,7 +215,7 @@ func (c *Controller) syncMSJob(key string) (bool, error) {
 		return false, fmt.Errorf("invalid job key %q: either namespace or name is missing", key)
 	}
 
-	tfJob, err := c.MSJobLister.MSJobs(ns).Get(name)
+	msJob, err := c.MSJobLister.MSJobs(ns).Get(name)
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -228,8 +227,8 @@ func (c *Controller) syncMSJob(key string) (bool, error) {
 
 	// Create a new TrainingJob if there is no TrainingJob stored for it in the jobs map or if the UID's don't match.
 	// The UID's won't match in the event we deleted the job and then recreated the job with the same name.
-	if cJob, ok := c.jobs[key]; !ok || cJob.UID() != tfJob.UID {
-		nc, err := trainer.NewJob(c.KubeClient, c.MSJobClient, c.recorder, tfJob, &c.config)
+	if cJob, ok := c.jobs[key]; !ok || cJob.UID() != msJob.UID {
+		nc, err := trainer.NewJob(c.KubeClient, c.MSJobClient, c.recorder, msJob, &c.config)
 
 		if err != nil {
 			return false, err
@@ -243,15 +242,13 @@ func (c *Controller) syncMSJob(key string) (bool, error) {
 		return false, err
 	}
 
-	tfJob, err = c.MSJobClient.KubeflowV1().MSJobs(tfJob.ObjectMeta.Namespace).Get(tfJob.ObjectMeta.Name, metav1.GetOptions{})
+	msJob, err = c.MSJobClient.KubeflowV1().MSJobs(msJob.ObjectMeta.Namespace).Get(msJob.ObjectMeta.Name, metav1.GetOptions{})
 
 	if err != nil {
 		return false, err
 	}
 
-	// TODO(jlewi): This logic will need to change when/if we get rid of phases and move to conditions. At that
-	// case we should forget about a job when the appropriate condition is reached.
-	if tfJob.Status.Phase == msv1.MSJobPhaseCleanUp {
+	if msJob.Status.Phase == msv1.MSJobPhaseCleanUp {
 		return true, nil
 	}
 	return false, nil

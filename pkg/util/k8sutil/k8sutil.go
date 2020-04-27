@@ -33,8 +33,6 @@ import (
 
 const RecommendedConfigPathEnvVar = "KUBECONFIG"
 
-// TODO(jlewi): I think this function is used to add an owner to a resource. I think we we should use this
-// method to ensure all resources created for the TFJob are owned by the TFJob.
 func addOwnerRefToObject(o metav1.Object, r metav1.OwnerReference) {
 	o.SetOwnerReferences(append(o.GetOwnerReferences(), r))
 }
@@ -99,15 +97,11 @@ func JobListOpt(clusterName string) metav1.ListOptions {
 
 func LabelsForJob(jobName string) map[string]string {
 	return map[string]string{
-		// TODO(jlewi): Need to set appropriate labels for TF.
 		"ms_job": jobName,
 		"app":         msv1.AppLabel,
 	}
 }
 
-// TODO(jlewi): CascadeDeletOptions are part of garbage collection policy.
-// Do we want to use this? See
-// https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/
 func CascadeDeleteOptions(gracePeriodSeconds int64) *metav1.DeleteOptions {
 	return &metav1.DeleteOptions{
 		GracePeriodSeconds: func(t int64) *int64 { return &t }(gracePeriodSeconds),
