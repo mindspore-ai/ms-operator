@@ -1,17 +1,19 @@
 # MindSpore Operator
 
-#### Experimental notice: This project is still experimental and only serves as a proof of concept for running MindSpore on Kubernetes. The current version of ms-operator is based on an early version of [PyTorch Operator](https://github.com/kubeflow/pytorch-operator) and [TF Operator](https://github.com/kubeflow/tf-operator). Right now MindSpore supports running LeNet with MNIST dataset on a single node, distributed training examples are expected in the near future.
+#### Experimental notice: This project is still experimental and only serves as a proof of concept for running MindSpore on Kubernetes. The current version of ms-operator is based on an early version of [PyTorch Operator](https://github.com/kubeflow/pytorch-operator) and [TF Operator](https://github.com/kubeflow/tf-operator). Right now MindSpore supports running LeNet with MNIST dataset on a single node, while distributed training examples are conducted using [Volcano](https://github.com/volcano-sh/volcano).
 
 - [MindSpore Operator](#mindspore-operator)
   - [Introduction of MindSpore and ms-operator](#introduction-of-mindspore-and-ms-operator)
     - [MindSpore docker image](#mindspore-docker-image)
     - [Design](#Design)
     - [Overview of MindSpore in Kubeflow ecosystem](#overview-of-mindspore-in-kubeflow-ecosystem)
-  - [Getting Started](#getting-started)
+  - [MindSpore CPU example](#mindspore-cpu-example)
     - [Prerequisites](#prerequisites)
-    - [Steps of running the example](#steps-of-running-the-example)
+    - [Steps](#steps)
+  - [Distributed GPU example using Volcano](#distributed-gpu-example-using-volcano)
+    - [Volcano prerequistites](#volcano-prerequisites)
+    - [MindSpore GPU example](#mindspore-gpu-example)
   - [Future Work](#future-work)
-  - [Appendix: Example yaml file](#appendix:-example-yaml-file)
   - [Community](#community)
   - [Contributing](#contributing)
   - [License](#license)
@@ -26,15 +28,16 @@ processor, and software hardware co-optimization.
 
 This project contains the specification and implementation of MSJob custom
 resource definition. We will demonstrate running a walkthrough of creating
-ms-operator, as well as MNIST training job on Kubernetes with MindSpore
-`0.1.0-alpha` image (x86 CPU build version) on a single node. More completed
-features will be developed in the coming days.
+ms-operator, as well as MNIST training job on Kubernetes with MindSpore-cpu image 
+(x86 CPU build version) on a single node. More completed features will be 
+developed in the coming days.
 
 This project defines the following:
 - The ms-operator
 - A way to deploy the operator
 - MindSpore LeNet MNIST training example
-- Future goal: distributed MindSpore training example
+- MindSpore distributed GPU example using Volcano
+- etc.
 
 ### MindSpore docker image
 
@@ -76,7 +79,7 @@ spec:
 The high-level view of how MindSpore fits in the ecosystem of Kubeflow and its
 components.
 
-## Getting Started
+## MindSpore CPU example
 
 ### Prerequisites
 
@@ -86,7 +89,7 @@ components.
 - [docker](https://github.com/docker/docker-ce/releases/tag/v18.06.1-ce): `v18.06.1-ce`
 - [Kubernetes](https://github.com/kubernetes/kubernetes/releases/tag/v1.14.0): `v1.14.0`
 
-### Steps of running the example
+### Steps
 
 First, pull the ms-operator image from [Docker Hub](https://hub.docker.com/r/mindspore):
 ```
@@ -151,6 +154,8 @@ The job is simply importing MindSpore packages, the dataset is already included 
 ```
 kubectl get pod msjob-mnist && kubectl logs msjob-mnist
 ```
+The expected output is:
+
 ```
 NAME          READY   STATUS      RESTARTS   AGE
 msjob-mnist   0/1     Completed   0          3h53m
@@ -167,10 +172,31 @@ epoch: 1 step: 9, loss is 2.3028255
 epoch: 1 step: 10, loss is 2.2972553
 ```
 
-Since MindSpore is in the early stage of open source, the whole community is
-still working on implementing distributed training of LeNet with MNIST dataset
-on Kubernetes, together with the distributed training on different backends
-(GPU || `Ascend`) are also expected in the near future.
+
+## Distributed GPU example using Volcano
+
+The source code of the example can be found [here](https://github.com/volcano-sh/volcano/tree/master/example/MindSpore-example).
+
+### Volcano Prerequisites
+
+- Kubernetes: `v1.16.6`
+- NVIDIA Docker: `2.3.0`
+- NVIDIA/k8s-device-plugin: `1.0.0-beta6`
+- NVIDIA drivers: `418.39`
+- CUDA: `10.1`
+
+Install Volcano: `kubectl apply -f https://raw.githubusercontent.com/volcano-sh/volcano/master/installer/volcano-development.yaml`
+
+### MindSpore GPU example
+
+Using a modified image which the openssh-server is installed from the official MindSpore GPU image. To check the eligibility of MindSpore GPU's ability to communicate with other processes, we leverage the mpimaster and mpiworker task spec of Volcano. In this example, we launch one mpimaster and two mpiworkers, the python script is taken from MindSpore Gitee README, which is also modified to be able to run parallelly.
+
+cd to `example/MindSpore-example/mindspore_gpu` folder, then:  
+pull image: `docker pull lyd911/mindspore-gpu-example:0.2.0`  
+to run: `kubectl apply -f mindspore-gpu.yaml`  
+to check result: `kubectl logs mindspore-gpu-mpimster-0`  
+
+The expected output should be (2*3) of multi-dimensional array.
 
 ## Future Work
 
@@ -197,90 +223,6 @@ MindSpore models.
 Once training completed, users can use [KFServing](https://github.com/kubeflow/kfserving)
 to create and deploy a server for inference thus completing the life cycle of
 machine learning.
-
-Distributed training is another field MindSpore will be focusing on. There are
-two major distributed training strategies nowadays: one based on parameter
-servers and the other based on collective communication primitives such as
-allreduce. [MPI Operator](https://github.com/kubeflow/mpi-operator) is one of
-the core components of Kubeflow which makes it easy to run synchronized,
-allreduce-style distributed training on Kubernetes. MPI Operator provides a crd
-for defining a training job on a single CPU/GPU, multiple CPU/GPUs, and multiple
-nodes. It also implements a custom controller to manage the CRD, create
-dependent resources, and reconcile the desired states. If MindSpore can leverage
-MPI Operator together with the high performance `Ascend` processor, it is
-possible that MindSpore will bring distributed training to an even higher level.
-
-## Appendix: Example yaml file
-
-The yaml file to create distributed training MSJob expected to be like this:
-```yaml
-# WIP example for distributed training
-apiVersion: "kubeflow.org/v1"
-kind: "MSJob"
-metadata:
-  name: "msjob-mnist"
-spec:
-  backend: "tcp"
-  masterPort: "23456"
-  replicaSpecs:
-    - replicas: 1
-      replicaType: MASTER
-      template:
-        spec:
-          containers:
-          - image: mindspore/mindspore-cpu:0.1.0-alpha
-            imagePullPolicy: IfNotPresent
-            name: msjob-mnist
-            command: ["/bin/bash", "-c", "python /tmp/test/MNIST/lenet.py"]
-            volumeMounts:
-              - name: training-result
-                mountPath: /tmp/result
-              - name: ms-mnist-local-file
-                mountPath: /tmp/test
-          restartPolicy: OnFailure
-          volumes:
-            - name: training-result
-              emptyDir: {}
-            - name: entrypoint
-              configMap:
-                name: dist-train
-                defaultMode: 0755
-          restartPolicy: OnFailure
-    - replicas: 3
-      replicaType: WORKER
-      template:
-        spec:
-          containers:
-          - image: mindspore/mindspore-cpu:0.1.0-alpha
-            imagePullPolicy: IfNotPresent
-            name: msjob-mnist
-            command: ["/bin/bash", "-c", "python /tmp/test/MNIST/lenet.py"]
-            volumeMounts:
-              - name: training-result
-                mountPath: /tmp/result
-              - name: ms-mnist-local-file
-                hostPath:
-                    path: /root/gopath/src/gitee.com/mindspore/ms-operator/examples
-          restartPolicy: OnFailure
-          volumes:
-            - name: training-result
-              emptyDir: {}
-            - name: entrypoint
-              configMap:
-                name: dist-train
-                defaultMode: 0755
-          restartPolicy: OnFailure
-```
-
-The MSJob currently is designed based on the TF Job and PyTorch Job,
-and is subject to change in future versions.
-
-We define `backend` protocol which the MS workers will use to communicate when
-initializing the worker group. MindSpore supports heterogeneous computing
-including multiple hardware and backends (`CPU`, `GPU`, `Ascend`),
-the device_target of MindSpore is `Ascend` by default.
-
-We define `masterPort` that groups will use to communicate with master service.
 
 ## Community
 
