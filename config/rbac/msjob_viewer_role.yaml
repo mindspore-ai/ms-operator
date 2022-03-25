@@ -1,0 +1,20 @@
+# permissions for end users to view msjobs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: msjob-viewer-role
+rules:
+- apiGroups:
+  - mindspore.gitee.com
+  resources:
+  - msjobs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - mindspore.gitee.com
+  resources:
+  - msjobs/status
+  verbs:
+  - get

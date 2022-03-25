@@ -1,0 +1,6 @@
+apiVersion: mindspore.gitee.com/v1
+kind: MSJob
+metadata:
+  name: msjob-sample
+spec:
+  # TODO(user): Add fields here

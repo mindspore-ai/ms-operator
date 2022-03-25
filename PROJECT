@@ -1,0 +1,16 @@
+domain: gitee.com
+layout:
+- go.kubebuilder.io/v3
+projectName: ms-operator
+repo: ms-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: gitee.com
+  group: mindspore
+  kind: MSJob
+  path: ms-operator/api/v1
+  version: v1
+version: "3"
