@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	mindsporev1 "ms-operator/pkg/apis/v1"
-	"ms-operator/pkg/controllers"
+	"ms-operator/pkg/controllers/v1"
 	//+kubebuilder:scaffold:imports
 )
 

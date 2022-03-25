@@ -12,7 +12,7 @@ RUN go mod download
 # Copy the go source
 COPY cmd/manager/main.go cmd/manager/main.go
 COPY pkg/apis/ pkg/apis/
-COPY pkg/controllers/ pkg/controllers/
+COPY pkg/controllers/v1/ pkg/controllers/v1/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager cmd/manager/main.go
