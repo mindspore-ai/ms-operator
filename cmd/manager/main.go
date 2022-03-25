@@ -31,8 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	mindsporev1 "ms-operator/api/v1"
-	"ms-operator/controllers"
+	mindsporev1 "ms-operator/pkg/apis/v1"
+	"ms-operator/pkg/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
