@@ -100,4 +100,5 @@ type MSJobList struct {
 
 func init() {
 	SchemeBuilder.Register(&MSJob{}, &MSJobList{})
+	SchemeBuilder.SchemeBuilder.Register(addDefaultingFuncs)
 }

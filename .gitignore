@@ -1,2 +1,13 @@
-# Mac files
-*.DS_Store
+# Binareis for programs and plugins
+bin
+testbin/*
+vendor/
+# Other temporary files
+.DS_Store
+
+# Files created by Gogland IDE
+.idea/
+
+# IDEs
+.vscode/
+__debug_bin
