@@ -21,9 +21,13 @@ make run
 ```
 
 # Samples
-当然ms-operator支持普通单Worker训练、PS模式的单Worker训练以及数据并行的Scheduler、Worker的非MPI启动。
+当然ms-operator支持普通单Worker训练、PS模式的单Worker训练以及数据并行的Scheduler、Worker非MPI启动。
 在`config/samples/`中有运行样例。
-
+以数据并行的Scheduler、Worker非MPI启动为例，其中数据集和网络脚本需提前准备：
+```
+kubectl apply -f config/samples/ms_wide_deep_dataparallel.yaml
+```
+使用`kubectl get all -o wide`即可看到集群中启动的Scheduler和Worker，以及Scheduler对应的Service。
 # 开发指南
 ## 核心代码：
 `pkg/apis/v1/msjob_types.go`中为MSJob的CRD定义。

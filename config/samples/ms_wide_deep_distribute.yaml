@@ -20,7 +20,7 @@ spec:
                 path: /home/fzh/wide_and_deep/
           containers:
             - name: mindspore
-              image: swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore-gpu-cuda10.1:1.6.0
+              image: swr.cn-south-1.myhuaweicloud.com/mindspore-ci/mindspore-gpu:1.7.0-20220327121541
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/bash
@@ -43,7 +43,7 @@ spec:
                 path: /home/fzh/wide_and_deep/
           containers:
             - name: mindspore
-              image: swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore-gpu-cuda10.1:1.6.0
+              image: swr.cn-south-1.myhuaweicloud.com/mindspore-ci/mindspore-gpu:1.7.0-20220327121541
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/bash
@@ -63,12 +63,12 @@ spec:
                 path: /home/fzh/wide_and_deep/
           containers:
             - name: mindspore
-              image: swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore-gpu-cuda10.1:1.6.0
+              image: swr.cn-south-1.myhuaweicloud.com/mindspore-ci/mindspore-gpu:1.7.0-20220327121541
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/bash
                 - -c
-                - pip install decorator -i http://cmc-cd-mirror.rnd.huawei.com/pypi/simple/ --trusted-host=cmc-cd-mirror.rnd.huawei.com; python -s /home/fzh/wide_and_deep/train_and_eval_parameter_server_distribute.py --device_target="GPU" --epochs=1 --data_path=/home/fzh/wide_and_deep/criteo_mindrecord --parameter_server=1  --vocab_cache_size=300000  --sparse=False
+                - python -s /home/fzh/wide_and_deep/train_and_eval_parameter_server_distribute.py --device_target="GPU" --epochs=1 --data_path=/home/fzh/wide_and_deep/criteo_mindrecord --parameter_server=1  --vocab_cache_size=300000  --sparse=False
               volumeMounts:
                 - mountPath: /home/fzh/wide_and_deep/
                   name: script-data

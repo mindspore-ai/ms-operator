@@ -17,12 +17,12 @@ spec:
                 path: /home/fzh/wide_and_deep/
           containers:
             - name: mindspore
-              image: swr.cn-south-1.myhuaweicloud.com/mindspore/mindspore-gpu-cuda10.1:1.6.0
+              image: swr.cn-south-1.myhuaweicloud.com/mindspore-ci/mindspore-gpu:1.7.0-20220327121541
               imagePullPolicy: IfNotPresent
               command:
                 - /bin/bash
                 - -c
-                - pip install decorator -i http://cmc-cd-mirror.rnd.huawei.com/pypi/simple/ --trusted-host=cmc-cd-mirror.rnd.huawei.com; python -s /home/fzh/wide_and_deep/train_and_eval.py --device_target="GPU" --data_path=/home/fzh/wide_and_deep/criteo_mindrecord --batch_size=16000 --epochs=1
+                - python -s /home/fzh/wide_and_deep/train_and_eval.py --device_target="GPU" --data_path=/home/fzh/wide_and_deep/criteo_mindrecord --batch_size=16000 --epochs=1
               volumeMounts:
                 - mountPath: /home/fzh/wide_and_deep/
                   name: script-data
