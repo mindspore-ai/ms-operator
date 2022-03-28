@@ -12,7 +12,7 @@ kubectl apply -f deploy/v1/ms-operator.yaml
 使用`kubectl describe pod me-operator-controller-manager-xxx-xxx -n ms-operator-sysytem`，可查看pod的详细信息。
 ## 2. 使用make deploy安装
 ```
-make deploy IMG=swr.cn-south-1.myhuaweicloud.com/mindspore/ms-operaptor:latest
+make deploy IMG=swr.cn-south-1.myhuaweicloud.com/mindspore/ms-operator:latest
 ```
 
 ## 3. 本地调试环境
@@ -30,8 +30,8 @@ make run
 `pkg/controllers/v1/msjob_controller.go`中为MSJob controller的核心逻辑。
 ## 镜像制作、上传
 ```
-make docker-build IMG=swr.cn-south-1.myhuaweicloud.com/mindspore/ms-operaptor:latest
-docker push swr.cn-south-1.myhuaweicloud.com/mindspore/ms-operaptor:latest
+make docker-build IMG=swr.cn-south-1.myhuaweicloud.com/mindspore/ms-operator:latest
+docker push swr.cn-south-1.myhuaweicloud.com/mindspore/ms-operator:latest
 ```
 ## 常见问题
 - 镜像构建过程中若发现gcr.io/distroless/static无法拉取，可参考[issue](https://github.com/anjia0532/gcr.io_mirror/issues/169)

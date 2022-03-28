@@ -4204,7 +4204,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: swr.cn-south-1.myhuaweicloud.com/mindspore/ms-operaptor:latest
+        image: swr.cn-south-1.myhuaweicloud.com/mindspore/ms-operator:latest
         livenessProbe:
           httpGet:
             path: /healthz
