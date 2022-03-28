@@ -1226,19 +1226,19 @@ func (jc *MSJobReconciler) CreateNewService(job metav1.Object, rtype commonv1.Re
 
 	err = jc.ServiceControl.CreateServicesWithControllerRef(job.GetNamespace(), service, job.(runtime.Object), controllerRef)
 	if err != nil && errors.IsTimeout(err) {
-		// 	// Service is created but its initialization has timed out.
-		// 	// If the initialization is successful eventually, the
-		// 	// controller will observe the creation via the informer.
-		// 	// If the initialization fails, or if the service keeps
-		// 	// uninitialized for a long time, the informer will not
-		// 	// receive any update, and the controller will create a new
-		// 	// service when the expectation expires.
+		// Service is created but its initialization has timed out.
+		// If the initialization is successful eventually, the
+		// controller will observe the creation via the informer.
+		// If the initialization fails, or if the service keeps
+		// uninitialized for a long time, the informer will not
+		// receive any update, and the controller will create a new
+		// service when the expectation expires.
 		succeededServiceCreationCount.Inc()
 		return nil
 	} else if err != nil {
-		// 	// Since error occurred(the informer won't observe this service),
-		// 	// we decrement the expected number of creates
-		// 	// and wait until next reconciliation
+		// Since error occurred(the informer won't observe this service),
+		// we decrement the expected number of creates
+		// and wait until next reconciliation
 		jc.Expectations.CreationObserved(expectationServicesKey)
 		failedServiceCreationCount.Inc()
 		return err
