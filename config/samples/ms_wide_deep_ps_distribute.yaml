@@ -3,7 +3,7 @@
 apiVersion: mindspore.gitee.com/v1
 kind: MSJob
 metadata:
-  name: ms-widedeep-distribute
+  name: ms-widedeep-ps-distribute
 spec:
   runPolicy:
     cleanPodPolicy: None
