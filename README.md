@@ -21,7 +21,8 @@ make run
 ```
 
 # Samples
-当然ms-operator支持普通单Worker训练、PS模式的单Worker训练以及数据并行的Scheduler、Worker非MPI启动。
+当前ms-operator支持普通单Worker训练、PS模式的单Worker训练以及数据并行的Scheduler、Worker非MPI启动。
+
 在`config/samples/`中有运行样例。
 以数据并行的Scheduler、Worker非MPI启动为例，其中数据集和网络脚本需提前准备：
 ```
