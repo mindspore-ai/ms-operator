@@ -1,5 +1,5 @@
 # MindSpore Operator
-MindSpore Operator 是Mindspore在Kubernetes上进行分布式训练的插件。CRD中定义了Scheduler、PS、Worker三种角色，用户只需配置yaml文件，即可轻松实现分布式训练。
+MindSpore Operator 是MindSpore在Kubernetes上进行分布式训练的插件。CRD（Custom Resource Definition）中定义了Scheduler、PS、Worker三种角色，用户只需配置yaml文件，即可轻松实现分布式训练。
 
 # 安装
 安装方法可以有以下几种
@@ -21,10 +21,10 @@ make run
 ```
 
 # Samples
-当前ms-operator支持普通单Worker训练、PS模式的单Worker训练以及数据并行的Scheduler、Worker非MPI启动。
+当前ms-operator支持普通单Worker训练、PS模式的单Worker训练以及自动并行（例如数据并行、模型并行等）的Scheduler、Worker启动。
 
 在`config/samples/`中有运行样例。
-以数据并行的Scheduler、Worker非MPI启动为例，其中数据集和网络脚本需提前准备：
+以数据并行的Scheduler、Worker启动为例，其中数据集和网络脚本需提前准备：
 ```
 kubectl apply -f config/samples/ms_wide_deep_dataparallel.yaml
 ```
