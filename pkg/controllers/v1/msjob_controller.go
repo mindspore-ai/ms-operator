@@ -94,6 +94,7 @@ const (
 	msSchedHost = "MS_SCHED_HOST"
 	msSchedPort = "MS_SCHED_PORT"
 	msRole      = "MS_ROLE"
+	msNodeId    = "MS_NODE_ID"
 
 	// exitedWithCodeReason is the normal reason when the pod is exited because of the exit code.
 	exitedWithCodeReason = "ExitedWithCode"
@@ -863,6 +864,14 @@ func (r *MSJobReconciler) SetClusterSpec(job interface{}, podTemplate *corev1.Po
 						Value: msSchedHostStr,
 					})
 				}
+				podTemplate.Spec.Containers[i].Env = append(podTemplate.Spec.Containers[i].Env, corev1.EnvVar{
+					Name: msNodeId,
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							FieldPath: "metadata.name",
+						},
+					},
+				})
 				podTemplate.Spec.Containers[i].Env = append(podTemplate.Spec.Containers[i].Env, corev1.EnvVar{
 					Name:  msSchedPort,
 					Value: msSchedPortStr,
