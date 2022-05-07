@@ -9,7 +9,7 @@ kubectl apply -f deploy/v1/ms-operator.yaml
 ```
 安装后：
 使用`kubectl get pods --all-namespaces`,即可看到namespace为ms-operator-system的部署任务。
-使用`kubectl describe pod ms-operator-controller-manager-xxx-xxx -n ms-operator-sysytem`，可查看pod的详细信息。
+使用`kubectl describe pod ms-operator-controller-manager-xxx-xxx -n ms-operator-system`，可查看pod的详细信息。
 ## 2. 使用make deploy安装
 ```
 make deploy IMG=swr.cn-south-1.myhuaweicloud.com/mindspore/ms-operator:latest
